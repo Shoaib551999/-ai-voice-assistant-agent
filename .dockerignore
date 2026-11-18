@@ -1,0 +1,16 @@
+.venv/
+.env
+.git/
+.github/
+__pycache__/
+.pytest_cache/
+*.pyc
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+*.wav
+*.mp3
+logs/
+screenshots/
+tests/

@@ -1,3 +1,5 @@
+import sys
+import subprocess
 import pandas as pd
 from log_reader import read_agent_logs
 import time
@@ -8,7 +10,12 @@ import hashlib
 import tempfile
 from pathlib import Path
 
-import pyttsx3
+
+try:
+    import pyttsx3
+except ImportError:
+    pyttsx3 = None
+
 import streamlit as st
 from dotenv import load_dotenv
 from groq import Groq
@@ -255,30 +262,55 @@ def generate_response(user_text):
     )
 
 
+
 # ==========================================
 # 5. TEXT-TO-SPEECH
 # ==========================================
 
+
 def generate_speech(text):
     """
-    Convert text into a WAV file using
-    the local Windows speech engine.
+    Generate speech audio on Windows and Linux.
+
+    Windows: pyttsx3
+    Linux Docker: eSpeak NG
     """
 
     with tempfile.NamedTemporaryFile(
         suffix=".wav",
-        delete=False,
+        delete=False
     ) as temp_file:
         audio_path = temp_file.name
 
     try:
-        engine = pyttsx3.init()
+        if sys.platform.startswith("linux"):
 
-        engine.setProperty("rate", 175)
-        engine.setProperty("volume", 1.0)
+            subprocess.run(
+                [
+                    "espeak-ng",
+                    "-w", audio_path,
+                    "-s", "160",
+                    text
+                ],
+                check=True,
+                capture_output=True,
+                text=True,
+                timeout=60
+            )
 
-        engine.save_to_file(text, audio_path)
-        engine.runAndWait()
+        else:
+            if pyttsx3 is None:
+                raise RuntimeError(
+                    "Text-to-speech engine unavailable."
+                )
+
+            engine = pyttsx3.init()
+
+            engine.setProperty("rate", 175)
+            engine.setProperty("volume", 1.0)
+
+            engine.save_to_file(text, audio_path)
+            engine.runAndWait()
 
         with open(audio_path, "rb") as audio_file:
             audio_bytes = audio_file.read()
@@ -293,7 +325,6 @@ def generate_speech(text):
     finally:
         if os.path.exists(audio_path):
             os.remove(audio_path)
-
 
 # ==========================================
 # 6. SIDEBAR

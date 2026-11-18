@@ -1,0 +1,27 @@
+
+services:
+  ai-voice-assistant:
+    build:
+      context: .
+      dockerfile: Dockerfile
+
+    image: ai-voice-assistant:latest
+    container_name: ai-voice-agent
+
+    ports:
+      - "8501:8501"
+
+    env_file:
+      - .env
+
+    environment:
+      VOICE_ASSISTANT_DB_PATH: /app/data/voice_assistant.db
+
+    volumes:
+      - ai_voice_data:/app/data
+
+    restart: unless-stopped
+
+volumes:
+  ai_voice_data:
+    external: true
